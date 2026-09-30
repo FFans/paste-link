@@ -1,0 +1,33 @@
+{
+  "name": "@ffans/paste-link",
+  "private": true,
+  "version": "0.0.0",
+  "devDependencies": {
+    "@types/jquery": "^3.5.10",
+    "flarum-tsconfig": "^2.0.0",
+    "flarum-webpack-config": "^3.0.0",
+    "oxfmt": "^0.66.0",
+    "typescript": "^5.0.0",
+    "typescript-coverage-report": "0.8.0",
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1"
+  },
+  "scripts": {
+    "dev": "webpack --mode development --watch",
+    "build": "webpack --mode production",
+    "analyze": "cross-env ANALYZER=true npm run build",
+    "format": "cd .. && oxfmt --config js/.oxfmtrc.json js less",
+    "format-check": "cd .. && oxfmt --config js/.oxfmtrc.json --check js less",
+    "clean-typings": "npx rimraf dist-typings && mkdir dist-typings",
+    "build-typings": "node scripts/build-typings.mjs",
+    "post-build-typings": "find dist-typings -type f -name '*.d.ts' -print0 | xargs -0 sed -i 's,../src/@types,@types,g'",
+    "check-typings": "tsc --noEmit --emitDeclarationOnly false",
+    "check-typings-coverage": "typescript-coverage-report",
+    "test": "node --test tests/*.test.cjs"
+  },
+  "type": "module",
+  "volta": {
+    "node": "26.8.1",
+    "pnpm": "12.8.1"
+  }
+}

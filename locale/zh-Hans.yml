@@ -1,0 +1,10 @@
+ffans-paste-link:
+  admin:
+    permissions:
+  forum:
+  ref:
+  lib:
+    gdpr:
+      export_description:
+      anonymize_description:
+      delete_description:
