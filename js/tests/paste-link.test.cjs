@@ -24,7 +24,7 @@ const { handlePaste } = loadSource('handlePaste', { './utils': utils });
 function assertProtectedRanges(text, ranges) {
   for (let i = 0; i < text.length; i++) {
     assert.equal(
-      utils.selectionIntersectsInlineLink(text, i, i + 1),
+      utils.selectionIntersectsLink(text, i, i + 1),
       ranges.some(({ start, end }) => start <= i && i < end),
       'Unexpected protection at character ' + i
     );
@@ -50,9 +50,9 @@ for (const [name, link] of links) {
     const start = 7;
     const end = start + link.length;
     assertProtectedRanges(text, [{ start, end }]);
-    assert.equal(utils.selectionIntersectsInlineLink(text, 0, start), false);
-    assert.equal(utils.selectionIntersectsInlineLink(text, end, text.length), false);
-    assert.equal(utils.selectionIntersectsInlineLink(text, 0, text.length), true);
+    assert.equal(utils.selectionIntersectsLink(text, 0, start), false);
+    assert.equal(utils.selectionIntersectsLink(text, end, text.length), false);
+    assert.equal(utils.selectionIntersectsLink(text, 0, text.length), true);
   });
 }
 
@@ -78,16 +78,16 @@ test('finds separate links and leaves gaps unprotected', () => {
     { start: 0, end: 6 },
     { start: 11, end: 18 },
   ]);
-  assert.equal(utils.selectionIntersectsInlineLink(text, 6, 11), false);
-  assert.equal(utils.selectionIntersectsInlineLink(text, 11, 12), true);
+  assert.equal(utils.selectionIntersectsLink(text, 6, 11), false);
+  assert.equal(utils.selectionIntersectsLink(text, 11, 12), true);
 });
 
 test('handles long incomplete brackets, targets and backslash runs', () => {
-  assert.equal(utils.selectionIntersectsInlineLink('['.repeat(100000), 0, 1), false);
-  assert.equal(utils.selectionIntersectsInlineLink('[a]('.repeat(25000), 0, 1), false);
+  assert.equal(utils.selectionIntersectsLink('['.repeat(100000), 0, 1), false);
+  assert.equal(utils.selectionIntersectsLink('[a]('.repeat(25000), 0, 1), false);
   const text = '[' + '\\'.repeat(100000) + '](url)';
-  assert.equal(utils.selectionIntersectsInlineLink(text, 0, 1), true);
-  assert.equal(utils.selectionIntersectsInlineLink(text, text.length - 1, text.length), true);
+  assert.equal(utils.selectionIntersectsLink(text, 0, 1), true);
+  assert.equal(utils.selectionIntersectsLink(text, text.length - 1, text.length), true);
 });
 
 function paste(text, start, end, clipboard = 'https://example.com', defaultPrevented = false) {
@@ -148,4 +148,85 @@ test('does not wrap existing links or images again', () => {
     assert.deepEqual(result.inserted, []);
     assert.equal(result.prevented, false);
   }
+});
+
+const plainLinks = [
+  'https://www.jetbrains.com/zh-cn/help/idea/markdown.html',
+  'https://jetbrains.com/zh-cn/help/idea/markdown.html',
+  'www.jetbrains.com/zh-cn/help/idea/markdown.html',
+  'http://jetbrains.com/zh-cn/help/idea/markdown.html',
+  'HTTPS://JETBRAINS.COM/zh-cn/help/idea/markdown.html',
+  'WWW.JETBRAINS.COM/zh-cn/help/idea/markdown.html',
+];
+
+for (const link of plainLinks) {
+  test('does not wrap any part of the plain link ' + link, () => {
+    const text = 'before ' + link + ' after';
+    const start = 7;
+    const end = start + link.length;
+    assertProtectedRanges(text, [{ start, end }]);
+    for (const [from, to] of [
+      [start, end],
+      [start + 10, start + 15],
+      [end - 13, end],
+      [0, end],
+      [start, text.length],
+    ]) {
+      const result = paste(text, from, to);
+      assert.deepEqual(result.inserted, []);
+      assert.equal(result.prevented, false);
+    }
+    assert.equal(paste(text, 0, 6).prevented, true);
+    assert.equal(paste(text, end + 1, text.length).prevented, true);
+  });
+}
+
+test('still wraps bare domains and their path fragments without a supported prefix', () => {
+  const text = 'jetbrains.com/zh-cn/help/idea/markdown.html';
+  assertProtectedRanges(text, []);
+  for (const [start, end] of [
+    [0, text.length],
+    [0, 9],
+    [text.length - 13, text.length],
+  ]) {
+    const result = paste(text, start, end);
+    assert.equal(result.prevented, true);
+    assert.deepEqual(result.inserted, [[start, end, '[' + text.slice(start, end) + '](https://example.com)']]);
+  }
+});
+
+test('keeps URL wrappers and sentence punctuation outside protected selections', () => {
+  const link = 'https://jetbrains.com/docs/a(b)';
+  for (const [prefix, suffix] of [
+    ['(', ').'],
+    ['<', '>'],
+    ['"', '"'],
+    ['[', ']'],
+    ['参考：', '，继续'],
+  ]) {
+    const text = prefix + link + suffix;
+    assertProtectedRanges(text, [{ start: prefix.length, end: prefix.length + link.length }]);
+  }
+});
+
+test('ignores incomplete URLs and www inside other tokens', () => {
+  for (const text of [
+    'https://',
+    'www.',
+    'www./path',
+    'https://?',
+    'notwww.jetbrains.com/path',
+    'user@www.jetbrains.com',
+  ]) {
+    assertProtectedRanges(text, []);
+    assert.equal(paste(text, 0, text.length).prevented, true);
+  }
+});
+
+test('checks plain links after unrelated Markdown links without protecting the gap', () => {
+  const text = '[label](url) gap https://jetbrains.com/path after';
+  const start = text.indexOf('https://');
+  const end = text.indexOf(' after');
+  assert.equal(utils.selectionIntersectsLink(text, start + 8, end), true);
+  assert.equal(utils.selectionIntersectsLink(text, 12, start), false);
 });

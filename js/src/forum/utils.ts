@@ -22,10 +22,53 @@ export function isLinkTarget(value: string): boolean {
   return !blockedSchemes.has(scheme);
 }
 
-export function selectionIntersectsInlineLink(text: string, selectionStart: number, selectionEnd: number): boolean {
+export function selectionIntersectsLink(text: string, selectionStart: number, selectionEnd: number): boolean {
+  if (selectionIntersectsPlainLink(text, selectionStart, selectionEnd)) return true;
+
   for (const link of iterateInlineLinks(text)) {
     if (link.start >= selectionEnd) return false;
     if (selectionStart < link.end) return true;
+  }
+
+  return false;
+}
+
+function selectionIntersectsPlainLink(text: string, selectionStart: number, selectionEnd: number): boolean {
+  const pattern = /(^|[^\w@./-])((?:https?:\/\/|www\.)[^\s<>"'`\[\]{}，。！？；：]+)/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text))) {
+    const start = match.index + match[1].length;
+    if (start >= selectionEnd) return false;
+
+    // Keep balanced parentheses in URL paths, but leave surrounding punctuation outside.
+    const candidate = match[2];
+    let parentheses = 0;
+    for (const character of candidate) {
+      if (character === '(') parentheses++;
+      else if (character === ')') parentheses--;
+    }
+
+    let end = candidate.length;
+    while (end > 0) {
+      const character = candidate[end - 1];
+      if (/[.,!?;:]/.test(character)) end--;
+      else if (character === ')' && parentheses < 0) {
+        parentheses++;
+        end--;
+      } else break;
+    }
+
+    if (selectionStart >= start + end) continue;
+
+    const target = candidate.slice(0, end);
+    const hasWwwPrefix = /^www\./i.test(target);
+    try {
+      const url = new URL(hasWwwPrefix ? 'https://' + target : target);
+      if (url.hostname && (!hasWwwPrefix || url.hostname.length > 4)) return true;
+    } catch {
+      // Incomplete or invalid URLs do not protect ordinary selected text.
+    }
   }
 
   return false;

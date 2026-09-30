@@ -1,6 +1,6 @@
 import BasicEditorDriver from 'flarum/common/utils/BasicEditorDriver';
 
-import { escapeLinkLabel, isLinkTarget, selectionIntersectsInlineLink } from './utils';
+import { escapeLinkLabel, isLinkTarget, selectionIntersectsLink } from './utils';
 
 export function handlePaste(event: ClipboardEvent, editor: BasicEditorDriver) {
   // console.log('[event]', event);
@@ -32,7 +32,7 @@ export function handlePaste(event: ClipboardEvent, editor: BasicEditorDriver) {
   }
 
   // no wrap again
-  if (selectionIntersectsInlineLink(value, start, end)) {
+  if (selectionIntersectsLink(value, start, end)) {
     return;
   }
 
