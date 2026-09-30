@@ -70,7 +70,7 @@ php flarum cache:clear
 
 - [GitHub](https://github.com/ffans/paste-link)
 - [Packagist](https://packagist.org/packages/ffans/paste-link)
-- [Discuss](https://discuss.flarum.org/d/)
+- [Discuss](https://discuss.flarum.org/d/39950)
 - [Discuss in Chinese](https://discuss.flarum.org.cn/d/16574)
 
 ## License
