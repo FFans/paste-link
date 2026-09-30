@@ -3,7 +3,7 @@
   "include": ["src/**/__tests__/**/*.ts", "../vendor/*/*/js/dist-typings/@types/**/*", "@types/**/*"],
   "files": ["./node_modules/@flarum/jest-config/shims.d.ts"],
   "compilerOptions": {
-    "types": ["jest", "jquery", "dom-close-watcher"],
+    "types": ["jest", "jquery"],
     "strict": false,
     "noImplicitReturns": false,
     "noImplicitAny": false

@@ -12,11 +12,14 @@
 namespace FFans\PasteLink;
 
 use Flarum\Extend;
+use Flarum\Foundation\Application;
 
 return [
     // Assets
     (new Extend\Frontend('forum'))
-        ->js(__DIR__ . '/js/dist/forum.js')
+        ->js(__DIR__ . (version_compare(Application::VERSION, '2.0.0-dev', '<')
+                ? '/js/dist/forum-1.x.js'
+                : '/js/dist/forum.js'))
         ->css(__DIR__ . '/less/forum.less'),
     new Extend\Locales(__DIR__ . '/locale'),
 ];
