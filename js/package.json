@@ -20,8 +20,6 @@
     "format": "cd .. && oxfmt --config js/.oxfmtrc.json js less",
     "format-check": "cd .. && oxfmt --config js/.oxfmtrc.json --check js less",
     "clean-typings": "npx rimraf dist-typings && mkdir dist-typings",
-    "build-typings": "node scripts/build-typings.mjs",
-    "post-build-typings": "find dist-typings -type f -name '*.d.ts' -print0 | xargs -0 sed -i 's,../src/@types,@types,g'",
     "check-typings": "tsc --noEmit --emitDeclarationOnly false",
     "check-typings-coverage": "typescript-coverage-report",
     "test": "webpack --mode production && node --test tests/*.test.cjs"
@@ -30,5 +28,15 @@
   "volta": {
     "node": "26.8.1",
     "pnpm": "12.8.1"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "26.8.1"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.8.1"
+    }
   }
 }

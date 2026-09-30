@@ -14,7 +14,6 @@ jobs:
       check_typings_script: check-typings
       test_script: test
       build_script: build
-      build_typings_script: ''
 
       frontend_directory: ./js
       backend_directory: .
